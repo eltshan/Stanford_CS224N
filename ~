@@ -33,20 +33,20 @@ public class IBMModel1Aligner implements WordAligner {
 		// handout to predict alignments based on the counts you collected with
 		// train().
 		Alignment alignment = new Alignment();
-		int currentMaxPositionSource = -1;
+		int currentMaxPositionJ = -1;
 		double currentMaxProb = Double.MIN_VALUE;
 
-		for (int i = 0; i < sentencePair.targetWords.size(); i++) {
-			String targetTerm = sentencePair.targetWords.get(i);
-			for (int j = 0; j < sentencePair.sourceWords.size(); j++) {
-				String sourceTerm = sentencePair.sourceWords.get(j);
+		for (int i = 0; i < sentencePair.sourceWords.size(); i++) {
+			String sourceTerm = sentencePair.sourceWords.get(i);
+			for (int j = 0; j < sentencePair.targetWords.size(); j++) {
+				String targetTerm = sentencePair.targetWords.get(j);
 				if (transProb.getCount(targetTerm, sourceTerm) > currentMaxProb) {
 					currentMaxProb = transCounts
 							.getCount(targetTerm, sourceTerm);
-					currentMaxPositionSource = j;
+					currentMaxPositionJ = j;
 				}
 			}
-			alignment.addPredictedAlignment(i, currentMaxPositionSource);
+			alignment.addPredictedAlignment(currentMaxPositionJ, i);
 			currentMaxProb = Double.MIN_VALUE;
 
 		}
@@ -62,7 +62,7 @@ public class IBMModel1Aligner implements WordAligner {
 		for (SentencePair sentencePair: trainingPairs){
 			for(String sourceTerm : sentencePair.sourceWords){
 				for(String targetTerm : sentencePair.targetWords){
-					transProb.setCount(targetTerm, sourceTerm, 1);
+					transProb.setCount(sourceTerm, targetTerm, 1);
 				}
 			}
 		}
@@ -73,7 +73,7 @@ public class IBMModel1Aligner implements WordAligner {
 		for (int t = 0; t < maxNumOfRounds; t++) {
 			//
 			if(t % 10 == 0)
-				System.out.println(t + " percent done...");
+				System.out.println(t/10 + " percent done...");
 			for (SentencePair sentencePair : trainingPairs) {
 				for (int i = 0; i < sentencePair.targetWords.size(); i++) {
 					for (int j = 0; j < sentencePair.sourceWords.size(); j++) {
