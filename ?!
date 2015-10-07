@@ -19,9 +19,9 @@ public class IBMModel2Aligner extends IBMModel1Aligner {
   
   // TODO: Use arrays or Counters for collecting sufficient statistics
   // from the training data.
-  private CounterMap<String,String> transCounts = new CounterMap<String, String>();
-  private CounterMap<String,Integer> alignCounts = new CounterMap<String,Integer>(); 
-  private CounterMap<String,Integer> alignmentProb = new CounterMap<String,Integer>();
+  private CounterMap<String,String> transCounts;
+  private CounterMap<String,Integer> alignCounts;
+  private CounterMap<String,Integer> alignmentProb;
   int maxNumOfRounds = 10;
   public Alignment align(SentencePair sentencePair) {
     // Placeholder code below. 
@@ -38,24 +38,11 @@ public class IBMModel2Aligner extends IBMModel1Aligner {
     super.train(trainingPairs);
     
     //initialize everything
-    for (SentencePair sentencePair : trainingPairs){
-    for(int i = 0; i < sentencePair.targetWords.size(); i++){
-    	for(int j = 0;j < sentencePair.sourceWords.size(); j++){
-		int l = sentencePair.targetWords.get(i).length();
-		int m = sentencePair.sourceWords.get(j).length();
-		String triple = "" + i + "+" + l + "+" + m;
-		alignmentProb.setCount(triple, j, 1);
-	}
-    }
-    }
-    //
-    //
-    //
     for(int t = 0; t < maxNumOfRounds; t++){
     	System.out.println(t + "out of " + maxNumOfRounds + " iterations done...");
 	for(SentencePair sentencePair : trainingPairs) {
-		for( int i = 0; i < sentencePair.targetWords.size(); i++){
-			for(int j = 0; j < sentencePair.sourceWords.size(); j++){
+		for( int i = 0; i < sentencePair.sourceWords.size(); i++){
+			for(int j = 0; j < sentencePair.targetWords.size(); j++){
 				updateCounts(i, j, sentencePair);
 			}
 		}
@@ -86,15 +73,15 @@ public class IBMModel2Aligner extends IBMModel1Aligner {
 			  	     sentencePair.sourceWords.get(j), updateNum);
   }
 
-  private double updateHelper(int i, int j, String triple,
+  private double updateHelper(int i, int j, String tripple,
 		  SentencePair sentencePair){
-	  double numerator = transProb.getCount(sentencePair.targetWords.get(i),
-			  			sentencePair.sourceWords.get(j));
+	  double numerator = transProb.getCount(sentencePair.targetWords.get(j),
+			  			sentencePair.sourceWords.get(i));
 	  double denormator = 0;
-	  for(int k = 0; k < sentencePair.sourceWords.size(); k++){
+	  for(int k = 0; k < sentencePair.targetWords.size(); k++){
 	  	denormator += alignmentProb.getCount(triple, k)*
-			super.transProb.getCount(sentencePair.targetWords.get(i),
-						 sentencePair.sourceWords.get(k));
+			super.transProb.getCount(sentencePair.targetWords.get(k),
+						 sentencePair.sourceWords.get(i));
 	  }
 	  return numerator / denormator;
   }

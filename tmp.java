@@ -22,10 +22,10 @@ public class IBMModel1Aligner implements WordAligner {
 
 	// TODO: Use arrays or Counters for collecting sufficient statistics
 	// from the training data.
-	protected CounterMap<String, String> sourceTargetCounts;
-	protected CounterMap<String, String> transProb = new CounterMap<String, String>();
-	protected CounterMap<Integer, Integer> alignmentProb = new CounterMap<Integer, Integer>();
-	protected CounterMap<String, String> transCounts = new CounterMap<String, String>();
+	private CounterMap<String, String> sourceTargetCounts;
+	private CounterMap<String, String> transProb = new CounterMap<String, String>();
+	private CounterMap<Integer, Integer> alignmentProb = new CounterMap<Integer, Integer>();
+	private CounterMap<String, String> transCounts = new CounterMap<String, String>();
 
 	public Alignment align(SentencePair sentencePair) {
 		// Placeholder code below.
@@ -36,21 +36,21 @@ public class IBMModel1Aligner implements WordAligner {
 		int currentMaxPositionSource = -1;
 		double currentMaxProb = Double.MIN_VALUE;
 
-		for (int i = 0; i < sentencePair.sourceWords.size(); i++) {
-			String sourceTerm = sentencePair.sourceWords.get(i);
-			for (int j = 0; j < sentencePair.targetWords.size(); j++) {
-				String targetTerm = sentencePair.targetWords.get(j);
+		for (int i = 0; i < sentencePair.targetWords.size(); i++) {
+			String targetTerm = sentencePair.targetWords.get(i);
+			for (int j = 0; j < sentencePair.sourceWords.size(); j++) {
+				String sourceTerm = sentencePair.sourceWords.get(j);
 				if (transProb.getCount(targetTerm, sourceTerm) > currentMaxProb) {
 					currentMaxProb = transProb.getCount(targetTerm, sourceTerm);
 					currentMaxPositionSource = j;
 				}
 			}
-			if(currentMaxPositionSource == sentencePair.targetWords.size()-1)
-				continue;
-			alignment.addPredictedAlignment(currentMaxPositionSource, i);
+			alignment.addPredictedAlignment(i, currentMaxPositionSource);
 			currentMaxProb = Double.MIN_VALUE;
 
 		}
+		// YOUR CODE HERE
+
 		return alignment;
 	}
 
@@ -59,7 +59,7 @@ public class IBMModel1Aligner implements WordAligner {
 		// YOUR CODE HERE
 		// Initialze
 		for (SentencePair sentencePair: trainingPairs){
-			sentencePair.targetWords.add("NULL");
+			//sentencePair.targetWords.add(0,"NULL");
 			for(String sourceTerm : sentencePair.sourceWords){
 				for(String targetTerm : sentencePair.targetWords){
 					transProb.setCount(targetTerm, sourceTerm, 1);
@@ -75,18 +75,18 @@ public class IBMModel1Aligner implements WordAligner {
 			//if(t % 10 == 0)
 			System.out.println(t + " out of " + maxNumOfRounds +" iterations done...");
 			for (SentencePair sentencePair : trainingPairs) {
-				for (int i = 0; i < sentencePair.sourceWords.size(); i++) {
-					for (int j = 0; j < sentencePair.targetWords.size(); j++) {
+				for (int i = 0; i < sentencePair.targetWords.size(); i++) {
+					for (int j = 0; j < sentencePair.sourceWords.size(); j++) {
 						alignmentProb
 								.setCount(
-										j,
 										i,
-										getAlignmentProb(j, i, sentencePair,
+										j,
+										getAlignmentProb(i, j, sentencePair,
 												transProb));
 						transCounts.incrementCount(
-								sentencePair.targetWords.get(j),
-								sentencePair.sourceWords.get(i),
-								alignmentProb.getCount(j, i));
+								sentencePair.targetWords.get(i),
+								sentencePair.sourceWords.get(j),
+								alignmentProb.getCount(i, j));
 					}
 
 				}
@@ -96,7 +96,7 @@ public class IBMModel1Aligner implements WordAligner {
 		}
 	}
 
-	protected void updateTransProb(CounterMap<String, String> transProb,
+	private void updateTransProb(CounterMap<String, String> transProb,
 			CounterMap<String, String> transCounts) {
 		for (String targetTerm : transCounts.keySet()) {
 			for (String sourceTerm : transCounts.getCounter(targetTerm)
